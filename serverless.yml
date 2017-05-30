@@ -1,0 +1,57 @@
+
+service: test
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: us-east-1
+
+functions:
+  hello:
+    handler: handler.hello
+
+resources:
+  Resources:
+    TestStepFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - states.us-east-1.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          -
+            PolicyName: allow-lambda
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                  Resource: "*"
+
+    TestStepFunction:
+      Type: AWS::StepFunctions::StateMachine
+      Properties:
+        RoleArn:
+          Fn::GetAtt: [ TestStepFunctionRole, Arn ]
+        DefinitionString: |
+          {
+            "Comment": "Test workflow",
+            "StartAt": "hello",
+            "States": {
+              "hello": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:us-east-1:${file(config.yml):accountId}:function:test-dev-hello",
+                "End": true
+              }
+            }
+          }
+
