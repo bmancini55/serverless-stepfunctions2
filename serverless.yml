@@ -12,9 +12,13 @@ functions:
 
 resources:
   Resources:
+
+    # Create the IAM Role for the Step Function
     TestStepFunctionRole:
       Type: AWS::IAM::Role
       Properties:
+        # Refer to:
+        # https://docs.aws.amazon.com/step-functions/latest/dg/procedure-create-iam-role.html
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -37,11 +41,16 @@ resources:
                     - lambda:InvokeFunction
                   Resource: "*"
 
+    # Define the Step Function
     TestStepFunction:
       Type: AWS::StepFunctions::StateMachine
       Properties:
         RoleArn:
           Fn::GetAtt: [ TestStepFunctionRole, Arn ]
+
+        # This could use Fn:Join to do better string concatination and
+        # not hard code the lambda name and make usre of Ref: [ AWS:AccountId]
+        # instead of storing the accountId in the config.
         DefinitionString: |
           {
             "Comment": "Test workflow",
